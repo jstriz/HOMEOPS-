@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type Screen = "Home" | "Property" | "Assets" | "Records" | "Service" | "Passport";
+type Screen = "Home" | "Property" | "Assets" | "Records" | "Service" | "Passport" | "Room";
 
 const homes = [
   { id: "home", name: "Your Home", line: "Colorado Springs, CO · primary demo", health: 82 },
@@ -69,14 +69,91 @@ const assets: Asset[] = [
   },
 ];
 
+type Equipment = { name: string; note: string; status: "Good" | "Watch" | "Action soon"; assetIndex?: number };
+type Room = {
+  name: string; condition: "Good" | "Watch" | "Action soon"; note: string;
+  equipment: Equipment[];
+  materials: { label: string; value: string }[];
+  history: { date: string; text: string }[];
+};
+
+const rooms: Room[] = [
+  {
+    name: "Kitchen", condition: "Good", note: "All fixtures and appliances in good working order.",
+    equipment: [
+      { name: "Kitchen sink", note: "InSinkErator Evolution", status: "Good" },
+      { name: "Dishwasher", note: "Bosch SHXM4AY55N", status: "Good" },
+      { name: "Garbage disposal", note: "InSinkErator Badger 5", status: "Good" },
+      { name: "GFCI outlet — island", note: "Leviton", status: "Good" },
+    ],
+    materials: [
+      { label: "Countertop", value: "Quartz" },
+      { label: "Flooring", value: "Luxury vinyl plank" },
+      { label: "Cabinets", value: "Painted maple, shaker" },
+    ],
+    history: [{ date: "Jul 28, 2026", text: "Kitchen faucet replaced" }],
+  },
+  {
+    name: "Living room", condition: "Good", note: "Comfortable and well maintained.",
+    equipment: [
+      { name: "Ceiling fan", note: "Hunter, 3-speed", status: "Good" },
+      { name: "Smoke detector", note: "Hardwired + battery backup", status: "Good" },
+      { name: "Thermostat", note: "Ecobee smart thermostat", status: "Good" },
+    ],
+    materials: [
+      { label: "Flooring", value: "Engineered hardwood" },
+      { label: "Paint", value: "Sherwin-Williams Agreeable Gray" },
+    ],
+    history: [{ date: "Feb 2024", text: "Smart thermostat installed" }],
+  },
+  {
+    name: "Mechanical room", condition: "Watch", note: "One item needs review before winter.",
+    equipment: [
+      { name: "Furnace + A/C", note: "Carrier Infinity 24VNA9", status: "Watch", assetIndex: 1 },
+      { name: "Water heater", note: "Rheem Performance Platinum XE50", status: "Action soon", assetIndex: 2 },
+      { name: "Sump pump", note: "Not yet documented", status: "Watch" },
+    ],
+    materials: [{ label: "Flooring", value: "Sealed concrete" }],
+    history: [{ date: "Mar 04, 2025", text: "HVAC filter replaced" }],
+  },
+  {
+    name: "Primary bedroom", condition: "Good", note: "No open items.",
+    equipment: [
+      { name: "Smoke detector", note: "Hardwired + battery backup", status: "Good" },
+      { name: "Window", note: "Double-pane, good seal", status: "Good" },
+      { name: "Closet light", note: "LED, motion sensor", status: "Good" },
+    ],
+    materials: [
+      { label: "Flooring", value: "Carpet" },
+      { label: "Paint", value: "Behr Swiss Coffee" },
+    ],
+    history: [{ date: "—", text: "No recent activity" }],
+  },
+  {
+    name: "Roof / exterior", condition: "Good", note: "Inspected recently, holding up well.",
+    equipment: [
+      { name: "Roof system", note: "GAF Timberline HDZ", status: "Good", assetIndex: 0 },
+      { name: "Gutters", note: "Aluminum, K-style", status: "Good" },
+      { name: "Exterior siding", note: "Fiber cement lap siding", status: "Good" },
+    ],
+    materials: [
+      { label: "Roofing", value: "Architectural asphalt shingle" },
+      { label: "Siding", value: "Fiber cement" },
+    ],
+    history: [{ date: "Aug 12, 2026", text: "Roof inspection completed" }],
+  },
+];
+
 function Status({ children }: { children: string }) { return <span className={`status ${children === "Good" ? "good" : children === "Watch" ? "watch" : "soon"}`}>{children}</span>; }
 function Score({ score, title, note }: { score:number; title:string; note:string }) { return <div className="score" style={{background:`conic-gradient(#2e8b68 ${score*3.6}deg,#e6efed 0deg)`}}><div><b>{score}</b><span>{title}</span><small>{note}</small></div></div>; }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>("Home"); const [homeId,setHomeId]=useState("home"); const [openHomes,setOpenHomes]=useState(false); const [asset,setAsset]=useState(1); const [issue,setIssue]=useState(false);
+  const [screen, setScreen] = useState<Screen>("Home"); const [homeId,setHomeId]=useState("home"); const [openHomes,setOpenHomes]=useState(false); const [asset,setAsset]=useState(1); const [room,setRoom]=useState(0); const [issue,setIssue]=useState(false);
   const home=homes.find(h=>h.id===homeId) ?? homes[0];
   const go=(next:Screen)=>setScreen(next);
-  return <main className="shell"><aside className="sidebar"><div className="brand"><i>H</i>Home<span>Ops</span></div><p className="side-label">PROPERTY WORKSPACE</p><button className="home-select" onClick={()=>setOpenHomes(!openHomes)}><i>{home.name.split(" ").map(x=>x[0]).join("")}</i><span><b>{home.name}</b><small>{home.line}</small></span><em>⌄</em></button>{openHomes&&<div className="home-menu">{homes.map(h=><button key={h.id} onClick={()=>{setHomeId(h.id);setOpenHomes(false)}}><b>{h.name}</b><small>{h.health} health</small></button>)}</div>}<nav>{(["Home","Property","Assets","Records","Service"] as Screen[]).map((n,i)=><button className={screen===n?"nav active":"nav"} onClick={()=>go(n)} key={n}><i>{["⌂","⌘","◈","▤","↗"][i]}</i>{n}</button>)}</nav><div className="side-bottom"><button onClick={()=>go("Service")}>✦ Ask HomeOps</button><small>Proof of concept · Demo data</small></div></aside><section className="main"><header><div><p className="eyebrow">HOMEOPS / {screen==="Passport"?"ASSET PASSPORT":screen.toUpperCase()}</p><h1>{screen==="Home"?"Good afternoon, Joshua.":screen==="Passport"?assets[asset].name:screen}</h1></div><div className="header-buttons"><button className="plain">Share record</button><button className="primary" onClick={()=>go("Service")}>+ Add / Request help</button><i>JS</i></div></header>{screen==="Home"&&<Home home={home} go={go} request={()=>{setIssue(true);go("Service")}}/>}{screen==="Property"&&<Property home={home} asset={asset} setAsset={setAsset} go={go}/>} {screen==="Assets"&&<Assets asset={asset} setAsset={setAsset} go={go}/>} {screen==="Records"&&<Records/>}{screen==="Service"&&<Service issue={issue}/>}{screen==="Passport"&&<Passport asset={asset} go={go}/>}</section></main>;
+  const titleFor = (s:Screen) => s==="Home" ? "Good afternoon, Joshua." : s==="Passport" ? assets[asset].name : s==="Room" ? rooms[room].name : s;
+  const eyebrowFor = (s:Screen) => s==="Passport" ? "ASSET PASSPORT" : s==="Room" ? "ROOM DETAIL" : s.toUpperCase();
+  return <main className="shell"><aside className="sidebar"><div className="brand"><i>H</i>Home<span>Ops</span></div><p className="side-label">PROPERTY WORKSPACE</p><button className="home-select" onClick={()=>setOpenHomes(!openHomes)}><i>{home.name.split(" ").map(x=>x[0]).join("")}</i><span><b>{home.name}</b><small>{home.line}</small></span><em>⌄</em></button>{openHomes&&<div className="home-menu">{homes.map(h=><button key={h.id} onClick={()=>{setHomeId(h.id);setOpenHomes(false)}}><b>{h.name}</b><small>{h.health} health</small></button>)}</div>}<nav>{(["Home","Property","Assets","Records","Service"] as Screen[]).map((n,i)=><button className={screen===n?"nav active":"nav"} onClick={()=>go(n)} key={n}><i>{["⌂","⌘","◈","▤","↗"][i]}</i>{n}</button>)}</nav><div className="side-bottom"><button onClick={()=>go("Service")}>✦ Ask HomeOps</button><small>Proof of concept · Demo data</small></div></aside><section className="main"><header><div><p className="eyebrow">HOMEOPS / {eyebrowFor(screen)}</p><h1>{titleFor(screen)}</h1></div><div className="header-buttons"><button className="plain">Share record</button><button className="primary" onClick={()=>go("Service")}>+ Add / Request help</button><i>JS</i></div></header>{screen==="Home"&&<Home home={home} go={go} request={()=>{setIssue(true);go("Service")}}/>}{screen==="Property"&&<Property home={home} asset={asset} setAsset={setAsset} setRoom={setRoom} go={go}/>} {screen==="Assets"&&<Assets asset={asset} setAsset={setAsset} go={go}/>} {screen==="Records"&&<Records/>}{screen==="Service"&&<Service issue={issue}/>}{screen==="Passport"&&<Passport asset={asset} go={go}/>}{screen==="Room"&&<RoomDetail room={room} go={go} setAsset={setAsset}/>}</section></main>;
 }
 
 function Home({home,go,request}:{home:typeof homes[number];go:(s:Screen)=>void;request:()=>void}) { return <div className="home-grid"><section className="hero-card"><div><p className="eyebrow green-label">PRIMARY DEMO PROPERTY</p><h2>{home.name}</h2><p>{home.line}</p><div className="facts"><span>Built 2006</span><span>2,186 sq ft</span><span>4 bed · 3 bath</span></div><button className="plain" onClick={()=>go("Property")}>Open digital twin →</button></div><figure><img src="/dollhouse.png" alt="Roof-off 3D dollhouse property model"/><figcaption>Demo twin · replace with mirrored home model</figcaption></figure></section><section className="health-card"><div className="health-top"><Score score={home.health} title="Home Health" note="Good"/><div><h3>Healthy, with 2 items to plan.</h3><p>Overall condition is strong. Keep the maintenance rhythm and plan ahead for aging equipment.</p><button className="link" onClick={()=>go("Assets")}>See score drivers →</button></div></div><div className="metrics"><Metric value="79" label="Performance" note="↑ 3 this year"/><Metric value="74" label="Readiness" note="2 tasks due"/><Metric value="68%" label="Record complete" note="14 open items"/></div></section><section className="card priority"><Title eyebrow="PRIORITY QUEUE" title="Needs attention" action="View all" onAction={()=>go("Assets")}/><Alert text="HVAC annual service" detail="Due in 30 days · Heating & cooling" status="Watch" action="Request help" onClick={request}/><Alert text="Water heater maintenance" detail="Flush history incomplete · Mechanical room" status="Action soon" action="Review" onClick={()=>go("Assets")}/></section><section className="card upcoming"><Title eyebrow="NEXT 60 DAYS" title="Keep ahead of the home" action="Calendar →"/><div className="date"><time>AUG 21</time><i/><p><b>Replace HVAC filter</b><small>DIY · 10 minutes</small></p></div><div className="date"><time>SEP 14</time><i className="amber"/><p><b>Annual HVAC service</b><small>Schedule contractor</small></p></div><div className="date"><time>OCT 01</time><i className="navy"/><p><b>Winterize exterior</b><small>Seasonal checklist</small></p></div></section><section className="card activity"><Title eyebrow="LIVING RECORD" title="Recent activity" action="Open record →" onAction={()=>go("Records")}/>{[["✓","Roof inspection added","Inspection report · 12 photos · Aug 12"],["↗","Kitchen faucet replaced","Receipt and warranty saved · Jul 28"],["+","Water heater details needed","Add model and serial to strengthen record"]].map(x=><div className="activity-row" key={x[1]}><i>{x[0]}</i><p><b>{x[1]}</b><small>{x[2]}</small></p></div>)}</section></div>; }
@@ -84,9 +161,15 @@ function Metric({value,label,note}:{value:string;label:string;note:string}){retu
 function Title({eyebrow,title,action,onAction}:{eyebrow:string;title:string;action:string;onAction?:()=>void}){return <div className="title"><div><p className="eyebrow">{eyebrow}</p><h3>{title}</h3></div><button className="link" onClick={onAction}>{action}</button></div>}
 function Alert({text,detail,status,action,onClick}:{text:string;detail:string;status:string;action:string;onClick:()=>void}){return <div className="alert"><i className={status==="Watch"?"orange":"amber"}/><p><b>{text}</b><small>{detail}</small></p><Status>{status}</Status><button onClick={onClick}>{action}</button></div>}
 
-function Property({home,asset,setAsset,go}:{home:typeof homes[number];asset:number;setAsset:(n:number)=>void;go:(s:Screen)=>void}) { return <div className="page"><section className="property-hero"><div><p className="eyebrow">DIGITAL TWIN / {home.name.toUpperCase()}</p><h2>Explore the home, not folders.</h2><p>Tap a room or system to see its equipment, evidence, and history.</p><div className="tabs"><button className="selected">Whole home</button><button>1st floor</button><button>2nd floor</button><button>Exterior</button></div></div><figure className="twin"><img src="/dollhouse.png" alt="Demo roof-off dollhouse"/><figcaption>Mirror the primary demo property from its real plan, photos, and asset locations.</figcaption></figure></section><section className="property-bottom"><div className="room-list"><p className="eyebrow">SPACES & SYSTEMS</p>{["Kitchen","Living room","Mechanical room","Primary bedroom","Roof / exterior"].map((room,i)=><button key={room} onClick={()=>setAsset(i===2?2:i===4?0:1)}><i className={i===2?"orange":""}/><b>{room}</b><small>{i===2?"1 item needs review":"Healthy"}</small><em>›</em></button>)}</div><div className="selected-asset"><p className="eyebrow">SELECTED ASSET</p><h3>{assets[asset].name}</h3><div className="photo-box">Asset photos & evidence</div><div className="trio"><span><b>{assets[asset].health}</b>Health</span><span><b>{assets[asset].age}</b>Age</span><span><b>2034</b>Plan horizon</span></div><button className="primary" onClick={()=>go("Passport")}>Open asset passport</button></div></section></div>; }
+function Property({home,asset,setAsset,setRoom,go}:{home:typeof homes[number];asset:number;setAsset:(n:number)=>void;setRoom:(n:number)=>void;go:(s:Screen)=>void}) { return <div className="page"><section className="property-hero"><div><p className="eyebrow">DIGITAL TWIN / {home.name.toUpperCase()}</p><h2>Explore the home, not folders.</h2><p>Tap a room or system to see its equipment, evidence, and history.</p><div className="tabs"><button className="selected">Whole home</button><button>1st floor</button><button>2nd floor</button><button>Exterior</button></div></div><figure className="twin"><img src="/dollhouse.png" alt="Demo roof-off dollhouse"/><figcaption>Mirror the primary demo property from its real plan, photos, and asset locations.</figcaption></figure></section><section className="property-bottom"><div className="room-list"><p className="eyebrow">SPACES & SYSTEMS</p>{rooms.map((r,i)=><button key={r.name} onClick={()=>{setRoom(i);setAsset(i===2?2:i===4?0:1);go("Room")}}><i className={r.condition==="Good"?"":"orange"}/><b>{r.name}</b><small>{r.condition==="Good"?"Healthy":"1 item needs review"}</small><em>›</em></button>)}</div><div className="selected-asset"><p className="eyebrow">SELECTED ASSET</p><h3>{assets[asset].name}</h3><div className="photo-box">Asset photos & evidence</div><div className="trio"><span><b>{assets[asset].health}</b>Health</span><span><b>{assets[asset].age}</b>Age</span><span><b>2034</b>Plan horizon</span></div><button className="primary" onClick={()=>go("Passport")}>Open asset passport</button></div></section></div>; }
 
-function Assets({asset,setAsset,go}:{asset:number;setAsset:(n:number)=>void;go:(s:Screen)=>void}){const a=assets[asset];return <div className="page"><section className="asset-head"><div><p className="eyebrow">ASSET PASSPORTS</p><h2>Every important system has a record.</h2><p>Identity, condition, lifecycle, maintenance, warranty, and proof in one place.</p></div><div><b>24</b><span>assets captured</span><small>68% complete</small></div></section><section className="assets-layout"><div className="asset-list">{assets.map((row,i)=><button className={i===asset?"asset-row selected":"asset-row"} onClick={()=>setAsset(i)} key={row.name}><i className={row.status==="Good"?"asset-icon":"asset-icon orange"}>{row.category[0]}</i><p><b>{row.name}</b><small>{row.category} · {row.age}</small></p><span className="bar"><i style={{width:`${row.health}%`}}/><small>{row.health} health</small></span><Status>{row.status}</Status><em>›</em></button>)}</div><aside className="passport"><p className="eyebrow">ASSET PASSPORT</p><Status>{a.status}</Status><h3>{a.name}</h3><p>{a.category} · {a.location}</p><div className="photo-box">Equipment photo</div><div className="trio"><span><b>{a.health}</b>Health</span><span><b>{a.age}</b>Current age</span><span><b>{a.lifeLeftLabel}</b>Est. life left</span></div><div className="note"><b>Why this status</b><p>{a.note}. HomeOps keeps this separate from verified records.</p></div><button className="plain" onClick={()=>go("Passport")}>View evidence & history →</button></aside></section></div>}
+function Assets({asset,setAsset,go}:{asset:number;setAsset:(n:number)=>void;go:(s:Screen)=>void}){
+  const a=assets[asset];
+  const [catFilter,setCatFilter]=useState<string|null>(null);
+  const categories=Array.from(new Set(assets.map(r=>r.category)));
+  const visible=assets.map((_,i)=>i).filter(i=>!catFilter||assets[i].category===catFilter);
+  return <div className="page"><section className="asset-head"><div><p className="eyebrow">ASSET PASSPORTS</p><h2>Every important system has a record.</h2><p>Identity, condition, lifecycle, maintenance, warranty, and proof in one place.</p></div><div><b>{assets.length}</b><span>assets captured</span><small>68% complete</small></div></section><section className="cat-tiles">{categories.map(c=>{const count=assets.filter(r=>r.category===c).length;return <button key={c} className={catFilter===c?"cat-tile selected":"cat-tile"} onClick={()=>setCatFilter(catFilter===c?null:c)}><b>{c}</b><span>{count} {count===1?"asset":"assets"}</span></button>})}</section><section className="assets-layout"><div className="asset-list">{visible.map(i=>{const row=assets[i];return <button className={i===asset?"asset-row selected":"asset-row"} onClick={()=>setAsset(i)} key={row.name}><i className={row.status==="Good"?"asset-icon":"asset-icon orange"}>{row.category[0]}</i><p><b>{row.name}</b><small>{row.category} · {row.age}</small></p><span className="bar"><i style={{width:`${row.health}%`}}/><small>{row.health} health</small></span><Status>{row.status}</Status><em>›</em></button>})}</div><aside className="passport"><p className="eyebrow">ASSET PASSPORT</p><Status>{a.status}</Status><h3>{a.name}</h3><p>{a.category} · {a.location}</p><div className="photo-box">Equipment photo</div><div className="trio"><span><b>{a.health}</b>Health</span><span><b>{a.age}</b>Current age</span><span><b>{a.lifeLeftLabel}</b>Est. life left</span></div><div className="note"><b>Why this status</b><p>{a.note}. HomeOps keeps this separate from verified records.</p></div><button className="plain" onClick={()=>go("Passport")}>View evidence & history →</button></aside></section></div>
+}
 
 function Passport({asset,go}:{asset:number;go:(s:Screen)=>void}){
   const a=assets[asset];
@@ -135,6 +218,47 @@ function Passport({asset,go}:{asset:number;go:(s:Screen)=>void}){
     <section className="note">
       <b>Why this status</b>
       <p>{a.note}. HomeOps keeps this separate from verified records.</p>
+    </section>
+  </div>;
+}
+
+function RoomDetail({room,go,setAsset}:{room:number;go:(s:Screen)=>void;setAsset:(n:number)=>void}){
+  const r=rooms[room];
+  const [tab,setTab]=useState<"Overview"|"Equipment"|"Materials"|"History">("Overview");
+  return <div className="page">
+    <button className="link" onClick={()=>go("Property")}>‹ Back to digital twin</button>
+    <section className="passport-hero">
+      <div className="passport-top"><p className="eyebrow">ROOM · {r.name.toUpperCase()}</p><Status>{r.condition}</Status></div>
+      <div className="passport-head">
+        <div><h2>{r.name}</h2><p>{r.note}</p></div>
+        <div className="photo-box passport-photo">Room photo</div>
+      </div>
+    </section>
+    <section className="card passport-tabs">
+      <div className="tabs">
+        {(["Overview","Equipment","Materials","History"] as const).map(t=>
+          <button key={t} className={tab===t?"selected":""} onClick={()=>setTab(t)}>{t}</button>
+        )}
+      </div>
+      <div className="tab-rows">
+        {tab==="Overview"&&<>
+          <div className="tab-row"><i>◈</i><p><b>{r.equipment.length} linked items</b><small>Equipment and fixtures tracked in this room</small></p></div>
+          <div className="tab-row"><i>●</i><p><b>Condition</b><small>{r.note}</small></p></div>
+        </>}
+        {tab==="Equipment"&&r.equipment.map(e=>
+          <button key={e.name} className="tab-row tab-row-click" onClick={()=>{if(e.assetIndex!==undefined){setAsset(e.assetIndex);go("Passport")}}}>
+            <i className={e.status==="Good"?"":"warn"}>{e.status==="Good"?"✓":"!"}</i>
+            <p><b>{e.name}</b><small>{e.note}</small></p>
+            <Status>{e.status}</Status>
+          </button>
+        )}
+        {tab==="Materials"&&r.materials.map(m=>
+          <div className="tab-row" key={m.label}><i>◫</i><p><b>{m.label}</b><small>{m.value}</small></p></div>
+        )}
+        {tab==="History"&&r.history.map(h=>
+          <div className="tab-row" key={h.text}><i>▤</i><p><b>{h.text}</b><small>{h.date}</small></p></div>
+        )}
+      </div>
     </section>
   </div>;
 }
